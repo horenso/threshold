@@ -1,0 +1,4 @@
+IndentWidth: 4
+PointerAlignment: Left
+IndentAccessModifiers: false
+AccessModifierOffset: 0
