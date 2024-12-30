@@ -1,6 +1,7 @@
 {
     global:
         gameTick;
+        gameInput;
     local:
         *;
 };
