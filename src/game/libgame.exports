@@ -1,5 +1,6 @@
 {
     global:
+        gameInit;
         gameTick;
         gameInput;
     local:

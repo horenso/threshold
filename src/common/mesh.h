@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/fwd.hpp"
 #include "shader.h"
 
 #define GL_GLEXT_PROTOTYPES 1
@@ -15,7 +16,7 @@ class Mesh final {
     explicit Mesh(std::string_view path,
                   const ShaderProgram& shaderProgram) noexcept;
 
-    void render() noexcept;
+    void render(const glm::mat4& transfrom) noexcept;
 
     private:
     std::vector<glm::vec3> m_vertices;

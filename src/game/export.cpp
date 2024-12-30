@@ -3,13 +3,10 @@
 #include "mesh.h"
 #include "shader.h"
 
-#define GL_GLEXT_PROTOTYPES 1
-#include "SDL3/SDL.h"
-#include "SDL3/SDL_stdinc.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include <optional>
 #include <string_view>
-#include <utility>
 
 #ifdef __linux__
 // Use default visibility for exported symbols
@@ -23,7 +20,10 @@ static Shader* fragmentShader{nullptr};
 static ShaderProgram* shaderProgram{nullptr};
 static Mesh* mesh{nullptr};
 
-void load(GameData* gameData) {
+static glm::mat4* transform{nullptr};
+
+extern "C" {
+EXPORT SDL_AppResult gameInit(GameData* gameData) {
     vertexShader =
         new Shader{ShaderKind::Vertex,
                    "/home/jannis/coding/threshold/src/shaders/shader1.vert"};
@@ -34,19 +34,21 @@ void load(GameData* gameData) {
         new ShaderProgram{*vertexShader, *fragmentShader, std::nullopt};
     mesh = new Mesh{"/home/jannis/coding/threshold/src/stls/suzanne.stl",
                     *shaderProgram};
+
+    transform = new glm::mat4(1.0f);
+
     SDL_Log("loaded...");
+
+    glViewport(0, 0, Config::width, Config::height);
+    return SDL_APP_CONTINUE;
 }
 
-extern "C" {
 EXPORT SDL_AppResult gameTick(GameData* gameData) {
-    if (!gameData->loaded) {
-        load(gameData);
-        gameData->loaded = true;
-    }
-    glViewport(0, 0, Config::width, Config::height);
     glClearColor(255, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    mesh->render();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    mesh->render(*transform);
+
     SDL_GL_SwapWindow(gameData->window);
     return SDL_APP_CONTINUE;
 }

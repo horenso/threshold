@@ -3,7 +3,9 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 
+#include <cmath>
 #include <fstream>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -37,9 +39,6 @@ Shader::Shader(ShaderKind kind, std::string_view path) {
     }
     GLuint const shader_id = glCreateShader(shaderType);
     std::string source = readSource(path);
-
-    SDL_Log("PATH: %s", path.data());
-    SDL_Log("SHADER: %s", source.data());
 
     const GLchar* source_ptr = source.data();
     GLint length = static_cast<GLint>(source.length());
@@ -85,9 +84,14 @@ Shader& Shader::operator=(Shader&& other) {
     return *this;
 }
 
+auto Shader::getUniform(std::string_view name) const -> GLuint {
+    return glGetUniformLocation(m_id, name.data());
+}
+
 ShaderProgram::ShaderProgram(const Shader& vertexShader,
                              const Shader& fragmentShader,
-                             std::optional<Shader> geometryShader) {
+                             std::optional<Shader> geometryShader)
+    : m_vertexShader(vertexShader), m_fragmentShader(fragmentShader) {
     m_id = glCreateProgram();
 
     glAttachShader(m_id, vertexShader.id());
@@ -125,7 +129,9 @@ ShaderProgram::ShaderProgram(const Shader& vertexShader,
 
 ShaderProgram::~ShaderProgram() noexcept { glDeleteProgram(m_id); }
 
-ShaderProgram::ShaderProgram(ShaderProgram&& other) : m_id(other.m_id) {}
+ShaderProgram::ShaderProgram(ShaderProgram&& other)
+    : m_id(other.m_id), m_vertexShader(other.m_vertexShader),
+      m_fragmentShader(other.m_fragmentShader) {}
 
 ShaderProgram& ShaderProgram::operator=(ShaderProgram&& other) {
     if (this->m_id == other.m_id) {
@@ -134,4 +140,17 @@ ShaderProgram& ShaderProgram::operator=(ShaderProgram&& other) {
     this->m_id = other.m_id;
     other.m_id = 0;
     return *this;
+}
+
+auto ShaderProgram::getUniform(ShaderKind kind,
+                               std::string_view name) const -> GLuint {
+    switch (kind) {
+    case ShaderKind::Vertex:
+        return m_vertexShader.getUniform(name);
+    case ShaderKind::Fragment:
+        return m_fragmentShader.getUniform(name);
+    case ShaderKind::Geometry:
+    default:
+        throw std::invalid_argument("ShaderKind invalid");
+    }
 }

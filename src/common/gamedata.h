@@ -7,5 +7,4 @@
 struct GameData {
     SDL_Window* window{nullptr};
     SDL_GLContext context{nullptr};
-    bool loaded{false};
 };

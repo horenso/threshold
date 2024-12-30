@@ -27,8 +27,10 @@ static bool reload = false;
 static std::string libraryPath =
     (std::filesystem::current_path() / "libgame.so").string();
 
+using GameInitFunc = SDL_AppResult (*)(GameData*);
 using GameTickFunc = SDL_AppResult (*)(GameData*);
 using GameInputFunc = SDL_AppResult (*)(GameData*, SDL_Event* event);
+static GameInitFunc gameInit = nullptr;
 static GameTickFunc gameTick = nullptr;
 static GameInputFunc gameInput = nullptr;
 
@@ -60,6 +62,8 @@ void loadGameLibrary() {
         exit(1);
     }
 
+    gameInit = reinterpret_cast<GameInitFunc>(
+        dlsym(gameDynamicLibraryHandle, "gameInit"));
     gameTick = reinterpret_cast<GameTickFunc>(
         dlsym(gameDynamicLibraryHandle, "gameTick"));
     gameInput = reinterpret_cast<GameInputFunc>(
@@ -139,17 +143,16 @@ SDL_AppResult SDL_AppInit(void**, int, char*[]) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     glViewport(0, 0, Config::width, Config::height);
-
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
     gameData = {
         .window = window,
         .context = context,
-        .loaded = false,
     };
 
-    return SDL_APP_CONTINUE;
+    return gameInit(&gameData);
 }
 
 void SDL_AppQuit(void*, SDL_AppResult) {
