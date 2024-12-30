@@ -1,3 +1,6 @@
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_oldnames.h"
+#include "SDL3/SDL_stdinc.h"
 #include "config.h"
 #include "gamedata.h"
 #include "mesh.h"
@@ -44,12 +47,18 @@ EXPORT SDL_AppResult gameInit(GameData* gameData) {
 }
 
 EXPORT SDL_AppResult gameTick(GameData* gameData) {
+    Uint64 start_time = SDL_GetTicks();
+
     glClearColor(255, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     mesh->render(*transform);
 
     SDL_GL_SwapWindow(gameData->window);
+
+    Uint64 frame_time = SDL_GetTicks() - start_time;
+    SDL_Log("frame_time: %lu", frame_time);
+
     return SDL_APP_CONTINUE;
 }
 
