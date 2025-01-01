@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
-project(SDL3-Template-Project)
-
+project(Threshold)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_SUPPRESS_REGENERATION true)
 
 set(CLANG_EXTRA_WARNING_FLAGS
         -Wall
@@ -24,6 +22,7 @@ set(BUILD_SHARED_LIBS   ON  CACHE BOOL "Build Raylib as shared library" FORCE)
 set(BUILD_EXAMPLES      OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES         OFF CACHE BOOL "" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(SDL_TEST OFF CACHE BOOL "Disable building SDL3 tests" FORCE)
 
 FetchContent_Declare(
     SDL3
@@ -87,16 +86,19 @@ FetchContent_MakeAvailable(glm)
 add_executable(
     Threshold
     src/main/main.cpp
+    src/common/util.h src/common/util.cpp
 )
 
 add_library(game SHARED
     src/game/export.cpp
 )
-add_library(common STATIC
-    src/common/stlloader.cpp
-    src/common/shader.cpp
-    src/common/mesh.cpp
+
+file(GLOB COMMON_FILES
+    src/common/*.cpp
+    src/common/*.h
 )
+add_library(common STATIC ${COMMON_FILES})
+
 set_target_properties(game PROPERTIES
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN YES

@@ -1,6 +1,8 @@
 #include "mesh.h"
+
 #include "shader.h"
 #include "stlloader.h"
+#include "util.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -36,15 +38,17 @@ Mesh::Mesh(std::string_view path, const ShaderProgram& shaderProgram) noexcept
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Mesh::render(const glm::mat4& transform) noexcept {
+void Mesh::render(const glm::mat4& viewMatrix) noexcept {
     glUseProgram(this->m_shaderProgram.id());
 
-    glUniformMatrix4fv(
-        m_shaderProgram.getUniform(ShaderKind::Vertex, "transfrom"), 1,
-        GL_FALSE, glm::value_ptr(transform));
+    glm::mat4 transformMatrix = getTransformationMatrix();
+
+    GLuint uniform_id = m_shaderProgram.getUniform("transform");
+
+    glUniformMatrix4fv(uniform_id, 1, GL_FALSE,
+                       glm::value_ptr(transformMatrix));
 
     glBindVertexArray(this->m_vao);
-    // TODO save mesh data together with m_vao in mesh
     glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
     glUseProgram(0);
 }

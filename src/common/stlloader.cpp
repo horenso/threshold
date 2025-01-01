@@ -1,7 +1,8 @@
 #include "stlloader.h"
 
+#include <SDL3/SDL_log.h>
+
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
@@ -39,7 +40,7 @@ StlLoader::Result StlLoader::load(std::string_view path) {
         file.seekg(2, std::ios::cur); // Skip attribute byte count (2 bytes)
     }
 
-    std::cout << "Triangle count: " << triangle_count << std::endl;
+    SDL_Log("Triangle count: %u", triangle_count);
 
     std::vector<GLuint> indices(vertices.size());
     for (size_t i = 0; i < indices.size(); ++i) {

@@ -4,8 +4,8 @@
 #include <SDL3/SDL_opengl.h>
 
 #include <cmath>
+#include <format>
 #include <fstream>
-#include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -37,35 +37,35 @@ Shader::Shader(ShaderKind kind, std::string_view path) {
         shaderType = GL_GEOMETRY_SHADER;
         break;
     }
-    GLuint const shader_id = glCreateShader(shaderType);
+    m_id = glCreateShader(shaderType);
     std::string source = readSource(path);
 
-    const GLchar* source_ptr = source.data();
+    const GLchar* source_ptr = source.c_str();
     GLint length = static_cast<GLint>(source.length());
-    glShaderSource(shader_id, 1, &source_ptr, &length);
-    glCompileShader(shader_id);
+    glShaderSource(m_id, 1, &source_ptr, &length);
+    glCompileShader(m_id);
 
     GLint success = 0;
-    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
-
-    if (success == GL_FALSE) {
+    glGetShaderiv(m_id, GL_COMPILE_STATUS, &success);
+    if (success == GL_TRUE) {
+        SDL_Log("Shader compiled correctly");
+    } else {
         // Get the log length
         GLint log_length = 0;
-        glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
+        glGetShaderiv(m_id, GL_INFO_LOG_LENGTH, &log_length);
 
         if (log_length > 0) {
             // Allocate a buffer to hold the log
             std::string log_buffer(log_length, '\0');
 
             // Retrieve the shader info log
-            glGetShaderInfoLog(shader_id, log_length, nullptr,
-                               log_buffer.data());
+            glGetShaderInfoLog(m_id, log_length, nullptr, log_buffer.data());
 
-            glDeleteShader(shader_id);
+            glDeleteShader(m_id);
             throw std::runtime_error("shader compilation failed: " +
                                      log_buffer);
         }
-        glDeleteShader(shader_id);
+        glDeleteShader(m_id);
         throw std::runtime_error(
             "shader compilation failed but no log provided");
     }
@@ -84,14 +84,9 @@ Shader& Shader::operator=(Shader&& other) {
     return *this;
 }
 
-auto Shader::getUniform(std::string_view name) const -> GLuint {
-    return glGetUniformLocation(m_id, name.data());
-}
-
 ShaderProgram::ShaderProgram(const Shader& vertexShader,
                              const Shader& fragmentShader,
-                             std::optional<Shader> geometryShader)
-    : m_vertexShader(vertexShader), m_fragmentShader(fragmentShader) {
+                             std::optional<Shader> geometryShader) {
     m_id = glCreateProgram();
 
     glAttachShader(m_id, vertexShader.id());
@@ -101,15 +96,33 @@ ShaderProgram::ShaderProgram(const Shader& vertexShader,
     }
     glLinkProgram(m_id);
 
-    glDetachShader(m_id, vertexShader.id());
-    glDetachShader(m_id, fragmentShader.id());
-    if (geometryShader.has_value()) {
-        glDetachShader(geometryShader.value().id(), m_id);
+    GLint success = 0;
+    glGetProgramiv(m_id, GL_LINK_STATUS, &success);
+    if (success == GL_TRUE) {
+        SDL_Log("Program linking succeeded!");
+    } else {
+        GLint log_length = 0;
+        glGetProgramiv(m_id, GL_INFO_LOG_LENGTH, &log_length);
+
+        if (log_length > 0) {
+            std::string log_buffer(log_length, '\0');
+            glGetProgramInfoLog(m_id, log_length, nullptr, log_buffer.data());
+            glDeleteProgram(m_id); // Clean up program
+            throw std::runtime_error("Shader program linking failed: " +
+                                     log_buffer);
+        }
+        glDeleteProgram(m_id); // Clean up program
+        throw std::runtime_error(
+            "Shader program linking failed but no log provided");
     }
 
-    int success = 0;
-    glGetProgramiv(m_id, GL_LINK_STATUS, &success);
-    if (success == GL_FALSE) {
+    glValidateProgram(m_id);
+
+    success = 0;
+    glGetProgramiv(m_id, GL_VALIDATE_STATUS, &success);
+    if (success == GL_TRUE) {
+        SDL_Log("Program is valid!");
+    } else {
         // Handle program linking error
         GLint log_length = 0;
         glGetProgramiv(m_id, GL_INFO_LOG_LENGTH, &log_length);
@@ -123,15 +136,13 @@ ShaderProgram::ShaderProgram(const Shader& vertexShader,
         throw std::runtime_error(
             "shader program linking failed but no log provided");
     }
-
-    glValidateProgram(m_id);
 }
 
-ShaderProgram::~ShaderProgram() noexcept { glDeleteProgram(m_id); }
+ShaderProgram::~ShaderProgram() noexcept {
+    glDeleteProgram(m_id);
+}
 
-ShaderProgram::ShaderProgram(ShaderProgram&& other)
-    : m_id(other.m_id), m_vertexShader(other.m_vertexShader),
-      m_fragmentShader(other.m_fragmentShader) {}
+ShaderProgram::ShaderProgram(ShaderProgram&& other) : m_id(other.m_id) {}
 
 ShaderProgram& ShaderProgram::operator=(ShaderProgram&& other) {
     if (this->m_id == other.m_id) {
@@ -142,15 +153,11 @@ ShaderProgram& ShaderProgram::operator=(ShaderProgram&& other) {
     return *this;
 }
 
-auto ShaderProgram::getUniform(ShaderKind kind,
-                               std::string_view name) const -> GLuint {
-    switch (kind) {
-    case ShaderKind::Vertex:
-        return m_vertexShader.getUniform(name);
-    case ShaderKind::Fragment:
-        return m_fragmentShader.getUniform(name);
-    case ShaderKind::Geometry:
-    default:
-        throw std::invalid_argument("ShaderKind invalid");
+auto ShaderProgram::getUniform(std::string_view name) const -> GLuint {
+    GLuint uniform_id = glGetUniformLocation(m_id, name.data());
+    if (uniform_id == GL_INVALID_INDEX) {
+        SDL_Log("%s",
+                std::format("Uniform with name {} not found", name).c_str());
     }
+    return uniform_id;
 }

@@ -1,22 +1,23 @@
 #pragma once
 
-#include "glm/fwd.hpp"
+#include "object.h"
 #include "shader.h"
 
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL3/SDL_opengl.h>
 
+#include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 
 #include <string_view>
 #include <vector>
 
-class Mesh final {
+class Mesh final : public Object {
     public:
     explicit Mesh(std::string_view path,
                   const ShaderProgram& shaderProgram) noexcept;
 
-    void render(const glm::mat4& transfrom) noexcept;
+    void render(const glm::mat4& viewMatrix) noexcept;
 
     private:
     std::vector<glm::vec3> m_vertices;

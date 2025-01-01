@@ -7,8 +7,8 @@ This will become a basic Portal clone to practice SDL and OpenGL.
 Typical cmake project. It fetches and builds SDL3.
 
 ```bash
-mkdir -p build
-cd build
-cmake ..
-make -j4 
+# configure
+cmake --preset default
+# build
+cmake --build --preset default
 ```

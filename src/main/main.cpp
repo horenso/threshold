@@ -17,7 +17,6 @@
 #include <csignal>
 #include <dlfcn.h>
 #include <filesystem>
-#include <iostream>
 
 static GameData gameData{};
 
@@ -35,7 +34,6 @@ static GameTickFunc gameTick = nullptr;
 static GameInputFunc gameInput = nullptr;
 
 void sigintHandler(int) {
-    std::cerr << "Reloading..." << std::endl;
     reload = true;
 }
 
@@ -48,17 +46,17 @@ void loadGameLibrary() {
         dlclose(gameDynamicLibraryHandle);
         error = dlerror();
         if (error) {
-            std::cerr << "Failed to close library: " << error << std::endl;
+            SDL_Log("Failed to close library: %s", error);
             exit(1);
         }
         gameDynamicLibraryHandle = nullptr;
-        std::cout << "library unloaded\n";
+        SDL_Log("Library unloaded");
     }
 
     gameDynamicLibraryHandle = dlopen(libraryPath.c_str(), RTLD_NOW);
     error = dlerror();
     if (error) {
-        std::cerr << "Failed to open library: " << error << std::endl;
+        SDL_Log("Failed to open library: %s", error);
         exit(1);
     }
 
@@ -71,7 +69,7 @@ void loadGameLibrary() {
 
     error = dlerror();
     if (error) {
-        std::cerr << "Failed to load symbol: " << error << std::endl;
+        SDL_Log("Failed to load symbol: %s", error);
         exit(1);
     }
 }
@@ -81,11 +79,16 @@ void onFramebufferSizeChanged(void*, int width, int height) {
 }
 
 SDL_AppResult SDL_AppIterate(void*) {
-    if (reload) {
-        loadGameLibrary();
-        reload = false;
+    try {
+        if (reload) {
+            loadGameLibrary();
+            reload = false;
+        }
+        return gameTick(&gameData);
+    } catch (const std::exception& e) {
+        SDL_Log("Exception during TICK: %s", e.what());
+        return SDL_APP_FAILURE;
     }
-    return gameTick(&gameData);
 }
 
 SDL_AppResult SDL_AppEvent(void*, SDL_Event* event) {
@@ -102,6 +105,11 @@ SDL_AppResult SDL_AppInit(void**, int, char*[]) {
         SDL_Log("SDL_Init(SDL_INIT_VIDEO) failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
 
     auto* window = SDL_CreateWindow("Hello SDL", Config::width, Config::height,
                                     SDL_WINDOW_OPENGL);
@@ -136,12 +144,6 @@ SDL_AppResult SDL_AppInit(void**, int, char*[]) {
         return SDL_APP_FAILURE;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                        SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
     glViewport(0, 0, Config::width, Config::height);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_DEPTH_TEST);
@@ -152,7 +154,12 @@ SDL_AppResult SDL_AppInit(void**, int, char*[]) {
         .context = context,
     };
 
-    return gameInit(&gameData);
+    try {
+        return gameInit(&gameData);
+    } catch (const std::exception& e) {
+        SDL_Log("Exception during INIT: %s", e.what());
+        return SDL_APP_FAILURE;
+    }
 }
 
 void SDL_AppQuit(void*, SDL_AppResult) {

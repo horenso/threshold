@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/gl.h>
+
 #include <optional>
 #include <string_view>
 
@@ -23,7 +24,6 @@ class Shader final {
     Shader& operator=(Shader&&);
 
     auto id() const -> GLuint { return m_id; }
-    auto getUniform(std::string_view name) const -> GLuint;
 
     private:
     explicit Shader(GLuint id) : m_id(id) {}
@@ -45,10 +45,8 @@ class ShaderProgram final {
     ShaderProgram& operator=(ShaderProgram&&);
 
     auto id() const -> GLuint { return m_id; }
-    auto getUniform(ShaderKind kind, std::string_view name) const -> GLuint;
+    auto getUniform(std::string_view name) const -> GLuint;
 
     private:
     GLuint m_id{0};
-    const Shader& m_vertexShader;
-    const Shader& m_fragmentShader;
 };
