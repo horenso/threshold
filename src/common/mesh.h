@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.h"
 #include "object.h"
 #include "shader.h"
 
@@ -17,13 +18,16 @@ class Mesh final : public Object {
     explicit Mesh(std::string_view path,
                   const ShaderProgram& shaderProgram) noexcept;
 
-    void render(const glm::mat4& viewMatrix) noexcept;
+    void render(const Camera& camera) noexcept;
 
     private:
     std::vector<glm::vec3> m_vertices;
     std::vector<GLuint> m_indices;
+    std::vector<glm::vec3> m_normals{m_vertices.size(), glm::vec3(0.0f)};
+
     const ShaderProgram& m_shaderProgram;
     GLuint m_vao{0};
-    GLuint m_vbo{0};
-    GLuint m_ebo{0};
+    GLuint m_vbo{0}; // vertices
+    GLuint m_nbo{0}; // normals
+    GLuint m_ebo{0}; // indices
 };

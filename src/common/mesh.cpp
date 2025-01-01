@@ -1,6 +1,5 @@
 #include "mesh.h"
 
-#include "shader.h"
 #include "stlloader.h"
 #include "util.h"
 
@@ -10,45 +9,62 @@
 Mesh::Mesh(std::string_view path, const ShaderProgram& shaderProgram) noexcept
     : m_shaderProgram(shaderProgram) {
     glGenVertexArrays(1, &m_vao);
-    glGenBuffers(1, &m_vbo);
-    glGenBuffers(1, &m_ebo);
+    glGenBuffers(1, &m_vbo); // Vertex buffer for positions
+    glGenBuffers(1, &m_nbo); // Normal buffer
+    glGenBuffers(1, &m_ebo); // Element buffer for indices
 
     glBindVertexArray(m_vao);
 
     auto result = StlLoader::load(path);
     m_vertices = std::move(result.vertices);
+    m_normals = std::move(result.normals);
     m_indices = std::move(result.indices);
 
+    // Bind and upload vertex position data
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-                 m_vertices.size() * sizeof(decltype(m_vertices)::value_type),
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * 3 * sizeof(GLfloat),
                  m_vertices.data(), GL_STATIC_DRAW);
 
+    // Bind and upload normal data
+    glBindBuffer(GL_ARRAY_BUFFER, m_nbo);
+    glBufferData(GL_ARRAY_BUFFER, m_normals.size() * sizeof(GLfloat),
+                 m_normals.data(), GL_STATIC_DRAW);
+
+    // Bind and upload index data
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 m_indices.size() * sizeof(decltype(m_indices)::value_type),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
                  m_indices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(decltype(m_vertices)::value_type), 0);
+    // Vertex position attribute (index 0)
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    // Normal attribute (index 1)
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Mesh::render(const glm::mat4& viewMatrix) noexcept {
+void Mesh::render(const Camera& camera) noexcept {
     glUseProgram(this->m_shaderProgram.id());
 
-    glm::mat4 transformMatrix = getTransformationMatrix();
+    glm::mat4 modelMatrix = getTransformationMatrix();
+    glm::mat4 viewMatrix = camera.getTransformationMatrix();
+    glm::mat4 projectionMatrix = camera.getProjectionMatrix();
 
-    GLuint uniform_id = m_shaderProgram.getUniform("transform");
-
-    glUniformMatrix4fv(uniform_id, 1, GL_FALSE,
-                       glm::value_ptr(transformMatrix));
+    glUniformMatrix4fv(m_shaderProgram.getUniform("uModel"), 1, GL_FALSE,
+                       glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(m_shaderProgram.getUniform("uTransform"), 1, GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(m_shaderProgram.getUniform("uProjection"), 1, GL_FALSE,
+                       glm::value_ptr(projectionMatrix));
 
     glBindVertexArray(this->m_vao);
     glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+
+    glBindVertexArray(0);
     glUseProgram(0);
 }

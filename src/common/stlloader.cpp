@@ -22,10 +22,16 @@ StlLoader::Result StlLoader::load(std::string_view path) {
     }
 
     std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
 
     // For each triangle
     for (uint32_t i = 0; i < triangle_count; ++i) {
-        file.seekg(12, std::ios::cur); // Skip the normal vector (12 bytes)
+        glm::vec3 normal;
+        file.read(reinterpret_cast<char*>(&normal), sizeof(normal));
+        if (!file) {
+            throw std::runtime_error("Failed to read vertex data");
+        }
+        normals.push_back(normal);
 
         for (int j = 0; j < 3; ++j) {
             glm::vec3 vertex;
@@ -47,5 +53,5 @@ StlLoader::Result StlLoader::load(std::string_view path) {
         indices[i] = static_cast<unsigned int>(i);
     }
 
-    return Result{vertices, indices};
+    return Result{vertices, normals, indices};
 }

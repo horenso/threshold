@@ -5,9 +5,6 @@
 
 #include <SDL3/SDL.h>
 
-Object::Object(const glm::vec3& pos, const glm::quat& rot)
-    : m_position(pos), m_rotation(rot) {}
-
 glm::mat4 Object::getTransformationMatrix() const {
     glm::mat4 rotationMatrix = glm::toMat4(m_rotation);
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1), m_position);
@@ -21,4 +18,15 @@ void Object::rotate(const glm::vec3& axis, float angle) {
 
 void Object::move(const glm::vec3& deltaPosition) {
     m_position += deltaPosition;
+    // Log the new position after the move
+    SDL_Log("Camera moved by (%f, %f, %f). New position: (%f, %f, %f)",
+            deltaPosition.x, deltaPosition.y, deltaPosition.z, m_position.x,
+            m_position.y, m_position.z);
+}
+
+void Object::setPosition(const glm::vec3& newPosition) {
+    m_position = newPosition;
+    // Log the new position after setting
+    SDL_Log("Camera position set to (%f, %f, %f)", m_position.x, m_position.y,
+            m_position.z);
 }

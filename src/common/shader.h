@@ -1,6 +1,7 @@
 #pragma once
 
-#include <glad/gl.h>
+#define GL_GLEXT_PROTOTYPES 1
+#include <SDL3/SDL_opengl.h>
 
 #include <optional>
 #include <string_view>

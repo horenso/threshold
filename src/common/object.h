@@ -6,12 +6,12 @@
 
 class Object {
     public:
-    Object(const glm::vec3& pos = glm::vec3(0.0f),
-           const glm::quat& rot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+    Object() {}
 
     glm::mat4 getTransformationMatrix() const;
     void rotate(const glm::vec3& axis, float angle);
     void move(const glm::vec3& deltaPosition);
+    void setPosition(const glm::vec3& newPosition);
 
     private:
     glm::vec3 m_position{};
