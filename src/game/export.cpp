@@ -28,18 +28,12 @@ static Camera* camera{nullptr};
 
 extern "C" {
 EXPORT SDL_AppResult gameInit(GameData* gameData) {
-    vertexShader =
-        new Shader{ShaderKind::Vertex,
-                   "/home/jannis/coding/threshold/src/shaders/shader1.vert"};
-    fragmentShader =
-        new Shader{ShaderKind::Fragment,
-                   "/home/jannis/coding/threshold/src/shaders/shader1.frag"};
+    vertexShader = new Shader{ShaderKind::Vertex, "shaders/shader1.vert"};
+    fragmentShader = new Shader{ShaderKind::Fragment, "shaders/shader1.frag"};
     shaderProgram =
         new ShaderProgram{*vertexShader, *fragmentShader, std::nullopt};
-    mesh1 = new Mesh{"/home/jannis/coding/threshold/src/stls/suzanne.stl",
-                     *shaderProgram};
-    mesh2 = new Mesh{"/home/jannis/coding/threshold/src/stls/donut.stl",
-                     *shaderProgram};
+    mesh1 = new Mesh{"stls/suzanne.stl", *shaderProgram};
+    mesh2 = new Mesh{"stls/donut.stl", *shaderProgram};
     camera = new Camera{};
     camera->setPosition({0, 0, 0});
 

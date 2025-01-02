@@ -132,3 +132,11 @@ target_link_libraries(game PUBLIC
 target_compile_options(common PRIVATE ${CLANG_EXTRA_WARNING_FLAGS})
 target_compile_options(game PRIVATE ${CLANG_EXTRA_WARNING_FLAGS})
 target_compile_options(Threshold PRIVATE ${CLANG_EXTRA_WARNING_FLAGS})
+
+##########################################################################################
+# Resources
+##########################################################################################
+
+# Install shaders
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/stls DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
