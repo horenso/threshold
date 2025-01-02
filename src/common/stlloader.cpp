@@ -26,12 +26,13 @@ StlLoader::Result StlLoader::load(std::string_view path) {
 
     // For each triangle
     for (uint32_t i = 0; i < triangle_count; ++i) {
-        glm::vec3 normal;
-        file.read(reinterpret_cast<char*>(&normal), sizeof(normal));
-        if (!file) {
-            throw std::runtime_error("Failed to read vertex data");
-        }
-        normals.push_back(normal);
+        // glm::vec3 normal;
+        // file.read(reinterpret_cast<char*>(&normal), sizeof(normal));
+        // if (!file) {
+        //     throw std::runtime_error("Failed to read vertex data");
+        // }
+        // normals.push_back(normal);
+        file.seekg(12, std::ios::cur);
 
         for (int j = 0; j < 3; ++j) {
             glm::vec3 vertex;

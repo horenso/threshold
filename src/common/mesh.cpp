@@ -3,6 +3,8 @@
 #include "stlloader.h"
 #include "util.h"
 
+#include <SDL3/SDL_log.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -37,11 +39,14 @@ Mesh::Mesh(std::string_view path, const ShaderProgram& shaderProgram) noexcept
 
     // Vertex position attribute (index 0)
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    SDL_Log("sizeof(decltype(m_vertices)::value_type): %u",
+            sizeof(decltype(m_vertices)::value_type));
 
     // Normal attribute (index 1)
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
