@@ -12,3 +12,5 @@ cmake --preset default
 # build
 cmake --build --preset default
 ```
+
+You can do the same using the scripts `conf.sh` and `build_and_run.sh`.

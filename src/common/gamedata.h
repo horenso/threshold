@@ -9,4 +9,11 @@
 struct GameData {
     SDL_Window* window{nullptr};
     SDL_GLContext context{nullptr};
+
+    Shader* vertexShader{nullptr};
+    Shader* fragmentShader{nullptr};
+    ShaderProgram* shaderProgram{nullptr};
+    Mesh* mesh1{nullptr};
+    Mesh* mesh2{nullptr};
+    Camera* camera{nullptr};
 };
