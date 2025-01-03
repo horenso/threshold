@@ -28,9 +28,9 @@ Mesh::Mesh(std::string_view path, const ShaderProgram& shaderProgram) noexcept
                  m_vertices.data(), GL_STATIC_DRAW);
 
     // Bind and upload normal data
-    glBindBuffer(GL_ARRAY_BUFFER, m_nbo);
-    glBufferData(GL_ARRAY_BUFFER, m_normals.size() * sizeof(GLfloat),
-                 m_normals.data(), GL_STATIC_DRAW);
+    // glBindBuffer(GL_ARRAY_BUFFER, m_nbo);
+    // glBufferData(GL_ARRAY_BUFFER, m_normals.size() * sizeof(GLfloat),
+    //              m_normals.data(), GL_STATIC_DRAW);
 
     // Bind and upload index data
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
